@@ -2,7 +2,7 @@
 
 /**
  * 面板自带认证：内存会话 + HMAC 签名 Cookie。
- * 设计说明：管理面板的认证与 TeamSpeak 6 原生认证完全隔离，
+ * 设计说明：管理面板的认证与 TeamSpeak 原生认证完全隔离，
  * 登录凭证来自 .env（PANEL_USERNAME / PANEL_PASSWORD）。
  */
 
