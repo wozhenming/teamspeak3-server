@@ -74,6 +74,7 @@ docker compose ps             # 状态
 docker compose restart teamspeak   # 重启 TS3（修改白名单后需要）
 docker compose down           # 停止（数据卷保留）
 docker compose down -v        # 停止并删除数据（⚠️ 数据丢失）
+bash deploy/diagnose.sh       # 一键诊断：面板/点歌连不上 TS3 时对比三方密码、测试连通性
 ```
 
 ## 两个关键配置点
