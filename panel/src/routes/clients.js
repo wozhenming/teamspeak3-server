@@ -23,13 +23,13 @@ function sidOf(req) {
 
 function mapClient(c, info) {
   const clid = Number(c.clid);
-  // TS3 查询接口的时间字段：client_idle_time 为毫秒；connection_connected_time
-  // 为连接时刻的 Unix 毫秒时间戳（需换算成已连接秒数）
+  // TS3 查询接口的时间字段（实测 3.13.8）：client_idle_time 与
+  // connection_connected_time 都是毫秒——后者是【已连接时长】而非时间戳
   const toSec = (v) => (v == null || v === '' ? null : Math.max(0, Math.floor(Number(v) / 1000)));
   const connectedSec = (v) => {
     const n = Number(v);
     if (!v || !Number.isFinite(n) || n <= 0) return null;
-    return Math.max(0, Math.floor((Date.now() - n) / 1000));
+    return Math.max(0, Math.floor(n / 1000));
   };
   const rawIdle = (info && info.client_idle_time != null)
     ? info.client_idle_time

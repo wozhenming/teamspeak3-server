@@ -153,7 +153,8 @@ const server = net.createServer((sock) => {
       const c = clients.find((x) => Number(x.clid) === Number(params.clid));
       if (!c) return err(512, 'invalid clientID');
       const { connectedAgoSec, ...rest } = c;
-      const conn = connectedAgoSec != null ? { connection_connected_time: Date.now() - connectedAgoSec * 1000 } : {};
+      // 对齐真实 TS3 语义：connection_connected_time = 已连接时长（毫秒）
+      const conn = connectedAgoSec != null ? { connection_connected_time: connectedAgoSec * 1000 } : {};
       return ok({ ...rest, ...conn, connection_client_ip: '203.0.113.7', client_created: '1700000000', client_lastconnected: '1700000000' });
     }
     if (cmd === 'channellist') {

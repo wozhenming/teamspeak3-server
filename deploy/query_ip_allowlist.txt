@@ -1,0 +1,8 @@
+# TeamSpeak 3 Query 接口 IP 白名单（每行一个 IP 或 CIDR）
+# 远程管理时把来源公网 IP 加入本文件（curl ifconfig.me 查看），
+# 然后重启容器：docker compose restart teamspeak
+127.0.0.1
+::1
+172.16.0.0/12
+10.0.0.0/8
+192.168.0.0/16

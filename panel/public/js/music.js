@@ -152,7 +152,7 @@ TSPages.music = async function () {
 
     <div class="card">
       <h3><span>机器人管理</span></h3>
-      <div class="muted" style="font-size:11.5px;margin-bottom:10px">点歌机器人：加入频道推流的音乐机器人（每个部署频道一个，固定驻留）；点歌助手：驻留频道接收 <code>/点歌</code> 等聊天指令的查询端（与机器人同频道）。此处管理二者的身份与生命周期，推流参数在「TeamSpeak 推流」卡片配置。</div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:10px">点歌机器人：加入频道推流的音乐机器人（每个部署频道一个，固定驻留）；点歌助手：驻留频道接收 <code>#点歌</code> 等聊天指令的查询端（与机器人同频道）。此处管理二者的身份与生命周期，推流参数在「TeamSpeak 推流」卡片配置。</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;flex-direction:column;gap:3px">
           <span class="muted" style="font-size:12px">点歌机器人昵称（多频道时自动加「·频道名」后缀区分，点歌助手同规则）</span>
@@ -188,7 +188,7 @@ TSPages.music = async function () {
             <button class="btn btn-sm" id="btn-ts-chat-help">指令一览</button>
             <span class="muted" id="ts-chat-state" style="font-size:11.5px"></span>
           </div>
-          <div class="muted" style="font-size:11px">频道聊天/私聊点歌助手：<code>/点歌 &lt;歌曲ID或链接&gt;</code> · <code>/播放(第N首)</code> · <code>/暂停</code> · <code>/切歌</code> · <code>/清队列</code> · <code>/搜索 &lt;关键词&gt;</code> · <code>/队列 [页码]</code></div>
+          <div class="muted" style="font-size:11px">频道聊天/私聊点歌助手：<code>#点歌 &lt;歌曲ID或链接&gt;</code> · <code>#播放(第N首)</code> · <code>#暂停</code> · <code>#切歌</code> · <code>#清队列</code> · <code>#搜索 &lt;关键词&gt;</code> · <code>#队列 [页码]</code></div>
         </div>
       </div>
     </div>
@@ -864,23 +864,23 @@ TSPages.music = async function () {
 
   // ---------- 聊天点歌指令一览（弹窗） ----------
   const CHAT_CMD_HELP = [
-    { cmd: '/点歌', alias: '/点 · /dian · /song · /req · /点播', ex: '/点歌 2652820720', desc: '点播歌曲（歌曲ID或网易云分享链接）' },
-    { cmd: '/播放', alias: '/继续 · /resume · /play · /开始', ex: '/播放', desc: '开始 / 继续播放' },
-    { cmd: '/播放第N首', alias: '/播第N首 · /播N · /跳N · /第N首 · /play N', ex: '/播放第3首', desc: '跳播队列第 N 首（1 基）' },
-    { cmd: '/暂停', alias: '/pause', ex: '/暂停', desc: '暂停播放' },
-    { cmd: '/切歌', alias: '/下一首 · /next · /skip', ex: '/切歌', desc: '切到下一首' },
-    { cmd: '/清队列', alias: '/清空队列 · /清队 · /清掉队列 · /clear', ex: '/清队列', desc: '清空点歌队列并停止播放' },
-    { cmd: '/搜索', alias: '/搜 · /查找 · /找歌 · /find · /search', ex: '/搜索 周杰伦', desc: '搜索歌曲，返回前5首（歌名-歌手-ID）' },
-    { cmd: '/队列', alias: '/列表 · /q · /playlist · /待播', ex: '/队列 2', desc: '查看播放队列（每页10首，可翻页）' },
-    { cmd: '/循环', alias: '/循环模式 · /loop · /cycle', ex: '/循环 列表', desc: '设置循环：列表 / 单曲 / 随机 / 关' },
-    { cmd: '/状态', alias: '/now · /当前 · /playing · /正在播放', ex: '/状态', desc: '查看当前播放与队列' },
+    { cmd: '#点歌', alias: '#点 · #dian · #song · #req · #点播', ex: '#点歌 2652820720', desc: '点播歌曲（歌曲ID或网易云分享链接）' },
+    { cmd: '#播放', alias: '#继续 · #resume · #play · #开始', ex: '#播放', desc: '开始 / 继续播放' },
+    { cmd: '#播放第N首', alias: '#播第N首 · #播N · #跳N · #第N首 · #play N', ex: '#播放第3首', desc: '跳播队列第 N 首（1 基）' },
+    { cmd: '#暂停', alias: '#pause', ex: '#暂停', desc: '暂停播放' },
+    { cmd: '#切歌', alias: '#下一首 · #next · #skip', ex: '#切歌', desc: '切到下一首' },
+    { cmd: '#清队列', alias: '#清空队列 · #清队 · #清掉队列 · #clear', ex: '#清队列', desc: '清空点歌队列并停止播放' },
+    { cmd: '#搜索', alias: '#搜 · #查找 · #找歌 · #find · #search', ex: '#搜索 周杰伦', desc: '搜索歌曲，返回前5首（歌名-歌手-ID）' },
+    { cmd: '#队列', alias: '#列表 · #q · #playlist · #待播', ex: '#队列 2', desc: '查看播放队列（每页10首，可翻页）' },
+    { cmd: '#循环', alias: '#循环模式 · #loop · #cycle', ex: '#循环 列表', desc: '设置循环：列表 / 单曲 / 随机 / 关' },
+    { cmd: '#状态', alias: '#now · #当前 · #playing · #正在播放', ex: '#状态', desc: '查看当前播放与队列' },
   ];
   function showChatCmdHelp() {
     const overlay = document.getElementById('modal-overlay');
     document.getElementById('modal-title').textContent = '聊天点歌指令一览';
     const body = document.getElementById('modal-body');
     body.innerHTML = `
-      <div class="muted" style="font-size:12px;margin-bottom:8px">指令以 <code>/</code> 开头；需在面板「机器人管理 → 点歌助手」中开启对应权限。直接发送歌曲ID或网易云链接也可点歌。</div>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">指令以 <code>#</code> 开头（避开 TS3 客户端 / 命令与 TS3AudioBot ! 命令）；需在面板「机器人管理 → 点歌助手」中开启对应权限。直接发送歌曲ID或网易云链接也可点歌。</div>
       <div class="table-wrap chat-help-table">
         <table>
           <thead><tr><th>指令</th><th>别名</th><th>示例</th><th>说明</th></tr></thead>

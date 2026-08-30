@@ -46,12 +46,12 @@ function computeRates(server) {
 
 function mapClient(c, info) {
   const clid = Number(c.clid);
-  // TS3：client_idle_time 毫秒；connection_connected_time 为连接时刻 Unix 毫秒时间戳
+  // TS3（实测）：两者均为毫秒，connection_connected_time 是已连接时长
   const toSec = (v) => (v == null || v === '' ? null : Math.max(0, Math.floor(Number(v) / 1000)));
   const connectedSec = (v) => {
     const n = Number(v);
     if (!v || !Number.isFinite(n) || n <= 0) return null;
-    return Math.max(0, Math.floor((Date.now() - n) / 1000));
+    return Math.max(0, Math.floor(n / 1000));
   };
   const rawIdle = (info && info.client_idle_time != null) ? info.client_idle_time
     : (c.client_idle_time != null ? c.client_idle_time : null);
