@@ -78,11 +78,11 @@ info "=== 7. music 实际生效的密码 ==="
 MUSIC_PWD="$(docker exec "$MUSIC_CONTAINER" node -e "console.log(require('./src/config').config.tsQueryAdminPassword)" 2>/dev/null || true)"
 ok "$(mask "$MUSIC_PWD")"
 
-info "=== 8. music 数据卷里页面保存的密码（优先级高于 .env） ==="
+info "=== 8. music 数据卷里页面保存的密码（仅 .env 未设置时生效） ==="
 docker exec "$MUSIC_CONTAINER" node -e "
 const fs=require('fs');
 try{const o=JSON.parse(fs.readFileSync('/app/data/tsbridge.json','utf8'));
-console.log(o.tsQueryAdminPassword?('有：'+o.tsQueryAdminPassword.slice(0,2)+'***（与 .env 不一致时会覆盖 .env！）'):'无');}catch(e){console.log('无 tsbridge.json');}"
+console.log(o.tsQueryAdminPassword?('有：'+o.tsQueryAdminPassword.slice(0,2)+'***（.env 已设置时不生效）'):'无');}catch(e){console.log('无 tsbridge.json');}"
 
 info "=== 9. 最近 10 条错误日志 ==="
 $DC logs --tail 300 2>/dev/null | grep -aiE 'error|断开|失败|banned|invalid' | tail -10 || info "（无）"
@@ -100,4 +100,4 @@ if [ "$MUSIC_PWD" = "$EXPECTED_PWD" ] && [ -n "$MUSIC_PWD" ]; then
 else
   bad "music 密码与 TS3 不一致（第 7 项 vs 期望值）——到面板「点歌页 → 机器人管理 → 查询密码」保存正确密码"
 fi
-info "提示：改 .env 后需 docker compose up -d 重建容器才会生效；页面保存的密码立即生效但会优先于 .env，两边不要填不同的值。"
+info "提示：.env 设置了 TS_QUERY_ADMIN_PASSWORD 时以 .env 为准（页面保存值不生效）；.env 留空时以页面保存值为准。改 .env 后需 docker compose up -d 重建容器才生效。"
