@@ -1,0 +1,16 @@
+# TS3AudioBot 权限配置（本项目的定制版）
+#
+# 1. 聊天用户（TS 频道里的用户）仅有 cmd.xecute 权限：配合机器人模板里的
+#    命令别名（点歌/播放/暂停… → xecute），让点歌机器人对 "!点歌" 等
+#    指令静默处理（点歌指令由 music 的点歌助手负责应答），不再报错刷屏。
+# 2. Web API 调用（music 服务经内网发起，isapi 匹配器）拥有全部权限。
+#
+# 安全边界：58913 端口只在 docker 内网暴露（compose 未发布到宿主机）。
+# 如需让用户直接用 !play 等命令控制机器人，参考官方 rights 文档调整：
+# https://github.com/Splamy/TS3AudioBot/wiki/Rights
+
+"+" = ["cmd.xecute"]
+
+[[rule]]
+	isapi = true
+	"+" = "*"

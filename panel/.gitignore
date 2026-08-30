@@ -1,0 +1,13 @@
+node_modules/
+.npm-cache/
+.env
+*.log
+ts3-boot.log
+ts3-credentials.txt
+ts3-metrics.json
+ts3-users.json
+test/tmp-deploy/
+ts3-credentials.txt
+ts3-metrics.json
+ts3-users.json
+ts6-users.json

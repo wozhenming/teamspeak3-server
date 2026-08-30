@@ -1,0 +1,161 @@
+# ============================================================================
+# TeamSpeak 3 全栈一键部署：TS3 服务器 + Web 管理面板 + TS3AudioBot 点歌机器人
+#
+# 用法：
+#   docker compose up -d          # 一键启动全部服务
+#   docker compose logs -f panel  # 查看面板日志
+#   docker compose down           # 停止（保留数据卷）
+#
+# 可选配置：复制 .env.example 为 .env 后按需修改（面板密码、端口等）。
+# 首次部署：打开 http://<主机>:3000 → 「部署管理」页提取 serveradmin 初始密码并保存。
+# 点歌链路：面板/频道聊天点歌 → music 队列/播放器 → /api/stream 电台流
+#           → ts3audiobot（真实 TS3 语音客户端）拉流推进频道。
+# ============================================================================
+
+services:
+  # ---------- TeamSpeak 3 服务器 ----------
+  teamspeak:
+    image: teamspeak:3.13
+    container_name: teamspeak-server
+    restart: unless-stopped
+    environment:
+      - TS3SERVER_LICENSE=accept   # 接受许可证（免费，最多 32 槽位）
+      # 可选：直接指定 serveradmin 密码（不设则首次启动随机生成并打印在容器日志）
+      - TS3SERVER_SERVERADMIN_PASSWORD=${TS_QUERY_ADMIN_PASSWORD:-}
+      # Query 接口 IP 白名单（项目根目录文件挂载为只读，独立于数据卷避免 entrypoint chown 冲突）
+      - TS3SERVER_IP_ALLOWLIST=/etc/ts3server/query_ip_allowlist.txt
+    ports:
+      - "${TS_PORT_VOICE:-9987}:9987/udp"      # 语音端口（必须）
+      - "${TS_PORT_FILE:-30033}:30033/tcp"     # 文件传输端口
+      - "127.0.0.1:${TS_PORT_QUERY:-10011}:10011/tcp"  # ServerQuery（面板经内网访问；远程管理去掉 127.0.0.1: 并把来源 IP 加入白名单）
+    volumes:
+      - teamspeak-data:/var/ts3server/
+      - ./query_ip_allowlist.txt:/etc/ts3server/query_ip_allowlist.txt:ro
+    networks:
+      - ts3
+
+  # ---------- Web 管理面板 ----------
+  panel:
+    build: ./panel
+    image: ts3-panel:local
+    pull_policy: never              # 只使用本地构建产物，不从 registry 拉取（避免镜像源 403）
+    container_name: ts3-panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_PORT:-3000}:3000"             # 管理面板
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - PANEL_USERNAME=${PANEL_USERNAME:-admin}
+      - PANEL_PASSWORD=${PANEL_PASSWORD:-admin123}   # ⚠️ 生产环境务必通过 .env 修改
+      - SESSION_SECRET=${SESSION_SECRET:-please-change-me}
+      - TSSERVER_QUERY_HOST=teamspeak              # 容器网络内访问 TS3 ServerQuery
+      - TSSERVER_QUERY_PORT=10011
+      - TSSERVER_QUERY_PASSWORD=${TS_QUERY_ADMIN_PASSWORD:-}   # serveradmin 密码（也可在「部署管理」页填写）
+      - TSSERVER_CONTAINER_NAME=teamspeak-server
+      - PANEL_RUN_MODE=container               # 容器化模式：部署页操作/日志对接主机 Docker
+      - PANEL_ENV_FILE=/app/config/panel.env   # 查询密码等配置持久化位置
+      - MUSIC_BASE_URL=http://music:3200        # 点歌机器人（后端代理）
+    volumes:
+      - panel-config:/app/config               # 持久化面板配置（查询密码等）
+      - /var/run/docker.sock:/var/run/docker.sock   # 读取 TS3 容器日志/凭证、快捷启停
+    depends_on:
+      - teamspeak
+    networks:
+      - ts3
+
+  # ---------- 网易云音乐 API（api-enhanced，点歌机器人歌曲来源） ----------
+  neteasemusic:
+    build:
+      context: .
+      dockerfile: music/api-enhanced.Dockerfile
+    container_name: neteasemusic
+    restart: unless-stopped
+    environment:
+      - PORT=3000                      # 仅内网，不暴露宿主端口
+      # 数据持久化（匿名 token / 缓存）
+      - NCMAPI_CONFIG=/app/data/config.json
+      - NCMAPI_COOKIE=/app/data/cookie
+    volumes:
+      - neteasemusic-data:/app/data
+      - neteasemusic-data:/tmp     # 匿名 token 与 xeapi public key 写在 /tmp，持久化避免每次重建都重新引导
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    # 图片代理端口（仅内网，供 music-bot 抓取网易云封面，借本容器外网出口）
+    expose:
+      - "3100"
+    networks:
+      - ts3
+
+  # ---------- 点歌机器人（music-bot：队列/播放器/电台流/聊天指令监听） ----------
+  music:
+    build: ./music
+    container_name: ts3-music-bot
+    restart: unless-stopped
+    environment:
+      - MUSIC_HOST=0.0.0.0
+      - MUSIC_BOT_PORT=3200
+      - NCMAPI_BASE=http://neteasemusic:3000   # api-enhanced 内网地址
+      - NETEASE_IMG_PROXY=http://neteasemusic:3100   # 经 neteasemusic 容器出口抓取封面（其有外网）
+      - MUSIC_DATA_DIR=/app/data
+      # TS3AudioBot 语音引擎对接（点歌机器人进入 TeamSpeak）。默认值开箱即用，
+      # 面板只需填写“频道”。如默认值不合用，改这里覆盖即可。
+      - TS3AB_URL=${TS3AB_URL:-http://ts3audiobot:58913}
+      - TS3AB_CHANNELS=${TS3AB_CHANNELS:-}
+      - TS3AB_BOT_NICKNAME=${TS3AB_BOT_NICKNAME:-}
+      # 电台流地址：TS3AudioBot 从这里拉流（引擎无 SSRF 限制，内网地址即可；
+      # 主机名会被 music 自动解析成 IP 后下发给引擎）。面板“收听”展示用 STREAM_PUBLIC_*。
+      - STREAM_BOT_URL=${STREAM_BOT_URL:-http://music:3200/api/stream}
+      - STREAM_PUBLIC_URL=${STREAM_PUBLIC_URL:-}
+      - STREAM_PUBLIC_HOST=${STREAM_PUBLIC_HOST:-}
+      - STREAM_TOKEN=${STREAM_TOKEN:-ts3bot}
+      - MUSIC_STREAM_PORT=${MUSIC_STREAM_PORT:-3200}
+      # TeamSpeak 3 连接（ServerQuery，聊天点歌 + 频道解析）。
+      - TS_HOST=${TS_HOST:-teamspeak}
+      - TS_QUERY_PORT=${TS_QUERY_PORT:-10011}
+      - TS_QUERY_ADMIN_PASSWORD=${TS_QUERY_ADMIN_PASSWORD:-}
+      # 机器人要加入的频道若设了密码，填这里（点歌机器人与点歌助手都会用它加入）
+      - TS_CHANNEL_PASSWORD=${TS_CHANNEL_PASSWORD:-}
+      # TS 频道聊天点歌：设置上面密码后自动启用（TS_CHAT_ENABLED=0 可显式关闭）。
+      # 同频道用户在频道聊天发送：!点歌 <歌曲ID或网易云链接> 即可点歌。
+      - TS_CHAT_ENABLED=${TS_CHAT_ENABLED:-}
+    volumes:
+      - music-data:/app/data               # 持久化网易云 cookie 与点歌队列
+    ports:
+      - "${MUSIC_STREAM_PORT:-3200}:3200"   # 电台流（对外收听；配合 STREAM_TOKEN 防随意收听）
+    depends_on:
+      neteasemusic:
+        condition: service_healthy
+      ts3audiobot:
+        condition: service_started
+    networks:
+      - ts3
+
+  # ---------- TS3AudioBot（点歌机器人的语音引擎，真实 TS3 语音客户端） ----------
+  # music 服务经其本地 Web API（58913，仅内网）部署/控制每频道的点歌机器人；
+  # rights.toml 限定 API 仅内网可用（顶层 "＋"="*"，端口不发布到宿主机）。
+  ts3audiobot:
+    image: ancieque/ts3audiobot:0.12.0
+    container_name: ts3audiobot
+    restart: unless-stopped
+    volumes:
+      - ts3ab-data:/app/data
+      - ./music/ts3ab/rights.toml:/app/data/rights.toml:ro
+    expose:
+      - "58913"
+    networks:
+      - ts3
+
+volumes:
+  teamspeak-data:
+  panel-config:
+  neteasemusic-data:
+  music-data:
+  ts3ab-data:
+
+networks:
+  ts3:

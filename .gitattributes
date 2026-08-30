@@ -1,0 +1,6 @@
+# 确保脚本在 Windows 检出时也保持 LF（部署目标为 Linux）
+*.sh text eol=lf
+*.bash text eol=lf
+
+# 其余文本文件按 Git 默认规则规范化
+* text=auto

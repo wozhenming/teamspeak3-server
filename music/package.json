@@ -1,0 +1,15 @@
+{
+  "name": "ts3-music-bot",
+  "version": "1.0.0",
+  "description": "TeamSpeak 3 点歌机器人（网易云音乐 api-enhanced 来源，TS3AudioBot 语音引擎）",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "license": "Apache-2.0"
+}
