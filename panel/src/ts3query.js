@@ -84,6 +84,7 @@ let pending = [];       // { rows, resolve, reject, timer, cmdStr }
 let connecting = null;  // 进行中的连接 Promise
 let chain = Promise.resolve(); // 命令串行链
 let lastError = '';
+let loginFailUntil = 0;   // 密码错误后的冷却期：防止高频重试触发 TS3 自动封禁
 
 function isReady() { return !!(sock && sock.writable && loggedIn); }
 
@@ -108,6 +109,11 @@ function teardown(err) {
 
 function connect() {
   if (connecting) return connecting;
+  if (Date.now() < loginFailUntil) {
+    const waitSec = Math.ceil((loginFailUntil - Date.now()) / 1000);
+    return Promise.reject(new QueryError(-1,
+      `上次登录失败后冷却中（还需 ${waitSec}s）：请确认 serveradmin 密码后重试`));
+  }
   const { tsQueryHost, tsQueryPort, tsQueryUser, tsQueryPassword } = config;
   connecting = new Promise((resolve, reject) => {
     const s = net.createConnection({ host: tsQueryHost, port: tsQueryPort });
@@ -162,6 +168,7 @@ function connect() {
         resolve();
       } catch (e) {
         const err = e instanceof QueryError ? e : new QueryError(-1, 'TS3 Query 登录失败：' + (e.message || e));
+        if (/512|invalid login/i.test(err.message)) loginFailUntil = Date.now() + 30000;
         lastError = err.message;
         connecting = null;
         teardown(err);
@@ -322,4 +329,7 @@ const ts = {
   deleteChannel: (sid, cid) => q(sid, 'channeldelete', { cid, force: 1 }),
 };
 
-module.exports = { ts, QueryError, esc, unesc, parseParams, splitRows, rowsOrObjects, _internals: { teardown, isReady } };
+// 密码更新后立即解除登录冷却（部署页保存密码时调用）
+function clearLoginCooldown() { loginFailUntil = 0; }
+
+module.exports = { ts, QueryError, esc, unesc, parseParams, splitRows, rowsOrObjects, clearLoginCooldown, _internals: { teardown, isReady } };

@@ -24,6 +24,10 @@ services:
       - TS3SERVER_SERVERADMIN_PASSWORD=${TS_QUERY_ADMIN_PASSWORD:-}
       # Query 接口 IP 白名单（项目根目录文件挂载为只读，独立于数据卷避免 entrypoint chown 冲突）
       - TS3SERVER_IP_ALLOWLIST=/etc/ts3server/query_ip_allowlist.txt
+      # 关闭 Query 登录爆破检测：密码输错不会触发 3329 自动封禁（面板/点歌助手重试风暴
+      # 曾因此被拉黑）。10011 默认只绑定 127.0.0.1，公网无法访问，安全风险可控；
+      # 如需把 10011 暴露公网，请删除本行并保留强密码。
+      - TS3SERVER_QUERY_SKIPBRUTEFORCECHECK=1
     ports:
       - "${TS_PORT_VOICE:-9987}:9987/udp"      # 语音端口（必须）
       - "${TS_PORT_FILE:-30033}:30033/tcp"     # 文件传输端口

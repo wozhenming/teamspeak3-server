@@ -19,7 +19,7 @@
 const express = require('express');
 const fs = require('fs');
 const { config, setQueryPassword } = require('../config');
-const { ts } = require('../ts3query');
+const { ts, clearLoginCooldown } = require('../ts3query');
 const docker = require('../docker');
 const dockerApi = require('../docker-api');
 
@@ -214,6 +214,7 @@ router.post('/password', (req, res) => {
     return res.status(400).json({ ok: false, error: { code: 'BAD_REQUEST', message: '缺少 password 参数' } });
   }
   const saved = setQueryPassword(password);
+  clearLoginCooldown(); // 新密码立即生效，不等冷却
   res.json({ ok: true, data: { configured: !!saved } });
 });
 
