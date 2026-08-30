@@ -89,7 +89,11 @@ function loadTsBridge() {
     if (o.ts3abBotNickname) config.ts3abBotNickname = o.ts3abBotNickname;
     if (o.tsHost) config.tsHost = o.tsHost;
     if (o.tsQueryPort != null) config.tsQueryPort = parseInt(o.tsQueryPort, 10);
-    if (o.tsQueryAdminPassword) config.tsQueryAdminPassword = o.tsQueryAdminPassword;
+    // 密码优先级：环境变量 > 页面保存值（页面值仅在环境变量为空时生效）。
+    // 否则 .env 设了新密码后，页面里存过的旧值会悄悄覆盖它，导致两边不一致。
+    if (o.tsQueryAdminPassword && !process.env.TS_QUERY_ADMIN_PASSWORD) {
+      config.tsQueryAdminPassword = o.tsQueryAdminPassword;
+    }
     if (o.ts3abChannelPassword) config.ts3abChannelPassword = o.ts3abChannelPassword;
     if (o.tsChatEnabled != null) config.tsChatEnabled = !!o.tsChatEnabled;
     if (o.chatCommands && typeof o.chatCommands === 'object') {
