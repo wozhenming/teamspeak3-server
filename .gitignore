@@ -9,3 +9,5 @@ node_modules/
 # 日志
 *.log
 ts3-boot.log
+deploy/docker-compose.yml
+deploy/query_ip_allowlist.txt
