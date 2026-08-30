@@ -122,7 +122,7 @@ async function main() {
   check('未发送 channelidbyname（release 稳定版不含该命令）', !seenCmds.some((c) => c.startsWith('channelidbyname')), seenCmds.filter((c) => c.startsWith('channel')));
 
   // ---- 2. 频道聊天点歌 → 入本频道队列 → 频道回执 ----
-  injectChat(clientSocks[0], '!点歌 742360', '测试用户');
+  injectChat(clientSocks[0], '/点歌 742360', '测试用户');
   await sleep(1200); // 等 songDetail + 入队 + 回执
 
   const q = queueMod.forChannel(CH1);
@@ -154,7 +154,7 @@ async function main() {
 
   // 第二频道点歌 → 入第二频道队列（互不可见）
   const sock2 = clientSocks[1];
-  injectChat(sock2, '!点歌 888888', '开黑房用户');
+  injectChat(sock2, '/点歌 888888', '开黑房用户');
   await sleep(1200);
   const q2 = queueMod.forChannel(CH2);
   check('开黑房的点歌只进开黑房队列', q2.all().length === 1 && String(q2.all()[0].songId) === '888888', q2.all());

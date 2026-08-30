@@ -123,6 +123,8 @@ services:
       # TS 频道聊天点歌：设置上面密码后自动启用（TS_CHAT_ENABLED=0 可显式关闭）。
       # 同频道用户在频道聊天发送：!点歌 <歌曲ID或网易云链接> 即可点歌。
       - TS_CHAT_ENABLED=${TS_CHAT_ENABLED:-}
+      # 频道聊天指令前缀（默认 "/"，避开 TS3AudioBot 对 "!" 消息的命令分发噪音）
+      - TS_CHAT_PREFIX=${TS_CHAT_PREFIX:-}
     volumes:
       - music-data:/app/data               # 持久化网易云 cookie 与点歌队列
     ports:

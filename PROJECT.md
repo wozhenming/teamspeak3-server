@@ -94,8 +94,8 @@ Docker 一键部署的全栈项目：TeamSpeak 3 服务器 + Web 管理面板 + 
   `client_id/channel_id`（不是 clid/cid）；clientlist 的 `client_idle_time` 为毫秒、
   `connection_connected_time` 为连接时刻的 Unix 毫秒时间戳；踢人 `reasonid` 4=频道 5=服务器。
 - **指令**（支持中/英文，面板可逐项开启/关闭；只作用于本频道自己的队列/播放器）：
-  `!点歌 <歌曲ID|链接>`、`!播放(第N首)`/`!继续`、`!暂停`、`!切歌`/`!下一首`、`!清队列`、
-  `!搜索`、`!队列 [页码]`、`!循环 <列表|单曲|随机|关>`、`!状态`。
+  `/点歌 <歌曲ID|链接>`、`/播放(第N首)`/`/继续`、`/暂停`、`/切歌`/`/下一首`、`/清队列`、
+  `/搜索`、`/队列 [页码]`、`/循环 <列表|单曲|随机|关>`、`/状态`。
 - 长回执按行拆分多条发送（TS3 单条消息约 1024 字节上限）；断线指数退避重连；
   昵称冲突自愈（error id=770 视为已在频道）。
 
@@ -131,7 +131,7 @@ Docker 一键部署的全栈项目：TeamSpeak 3 服务器 + Web 管理面板 + 
 | 白名单 CIDR 不生效 / 机器人被断开 | 镜像 WorkingDir 是 `/var/ts3server`，`query_ip_allowlist=query_ip_allowlist.txt` 读的是数据卷里的文件，挂到 `/teamspeak3-server` 无效；且数据卷被 entrypoint `chown -R`，只读单文件挂载在数据卷内会让容器启动崩溃 | 白名单挂到 `/etc/ts3server/` + `TS3SERVER_IP_ALLOWLIST` 指向；数据卷挂 `/var/ts3server` |
 | 机器人昵称一直是 TS3AudioBot | `connect.name` 只在**连接时**生效，创建流程先连接后设置 | 保存模板后 disconnect，再从模板重启 |
 | 看门狗反复 `/bot/use/null` | TS3AB 启动失败的实例 Status=0（Offline）且 Id=null；link 与看门狗并发重建 | findRunningBot 跳过 Status=0/Id=null；watchdogTick 遇 `linking` 避让 |
-| 机器人对频道里 `!点歌` 报 ambiguous 错误 | TS3AB 对所有 `!` 开头的聊天消息做命令分发（先于权限检查），未知指令公开报错 | 模板 `commands.matcher=exact` + rights 仅授予 API（isapi）；无法完全消除，属已知外观噪音 |
+| 机器人对聊天指令报错刷屏 | TS3AB 对所有 `!` 开头的聊天消息做命令分发（先于权限检查），未知指令公开报错 | 点歌指令前缀改为 `/`（`TS_CHAT_PREFIX` 可配）——引擎源码只拦截 `!` 开头的消息，其他前缀完全忽略，噪音彻底消除 |
 | panel overview 全部“连接未就绪” | 面板 Query 客户端 rawCmd 的就绪检查要求已登录，但登录命令本身发出时还未登录 | rawCmd 只检查 socket 可写 |
 | serverlist 只有一台时返回对象而非数组 | 单行结果被折叠成对象，列表消费方拿到 `{}` | 统一解析成数组；单对象消费方走 `one()` |
 | TS3 whoami 取不到 clid | TS3 字段是 `client_id/channel_id` | myInfo 做字段兼容 |
@@ -152,8 +152,8 @@ Docker 一键部署的全栈项目：TeamSpeak 3 服务器 + Web 管理面板 + 
 
 **TS 频道聊天指令**
 ```
-!点歌 <歌曲ID或网易云链接>
-!播放  !暂停  !切歌  !循环 <列表|单曲|随机|关>  !状态
+/点歌 <歌曲ID或网易云链接>
+/播放  /暂停  /切歌  /循环 <列表|单曲|随机|关>  /状态
 ```
 
 **部署**
