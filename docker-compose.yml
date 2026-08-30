@@ -15,7 +15,7 @@
 services:
   # ---------- TeamSpeak 3 服务器 ----------
   teamspeak:
-    image: teamspeak:3.13
+    image: teamspeak:3.13.8   # 固定版本：3.13.6 内置许可已过期无法启动；国内镜像加速对 :3.13 的缓存可能过旧，用具体版本号更稳
     container_name: ${TS_CONTAINER_NAME:-teamspeak-server}
     restart: unless-stopped
     environment:

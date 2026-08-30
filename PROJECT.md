@@ -28,7 +28,7 @@ Docker 一键部署的全栈项目：TeamSpeak 3 服务器 + Web 管理面板 + 
 
 | 维度 | TS6 版 | 本项目（TS3 版） |
 | ---- | ------ | ---------------- |
-| 服务器 | teamspeak6-server Beta | 官方 `teamspeak:3.13` 镜像 |
+| 服务器 | teamspeak6-server Beta | 官方 `teamspeak:3.13.8` 镜像 |
 | 管理协议 | WebQuery(HTTP REST) + API Key | ServerQuery(原始 TCP 10011) + serveradmin 密码 |
 | 语音引擎 | ts6-manager（WebRTC 引擎，backend/sidecar/frontend 三容器） | TS3AudioBot 0.12.0（单容器，`ancieque/ts3audiobot` 镜像） |
 | 聊天监听 | SSH ServerQuery(10022, ssh2) | 原始 TCP ServerQuery(10011, net) |
