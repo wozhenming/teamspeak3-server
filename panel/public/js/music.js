@@ -609,6 +609,7 @@ TSPages.music = async function () {
 
   // ---------- 部署频道列表（每频道固定一个机器人+一个点歌助手） ----------
   let tsChannelsAvail = []; // TS 上可用的频道（来自 TS3 ServerQuery）
+  let tsHasPassword = false; // music 侧是否已配置查询密码
   let deployChannels = [];  // 已配置的部署频道
 
   function renderChannelList() {
@@ -712,7 +713,9 @@ TSPages.music = async function () {
       if (!key) { TSUtils.toast('请先填写 TS 查询密码', 'error'); return; }
       TSUtils.toast('正在为 ' + deployChannels.length + ' 个频道部署/重建机器人…', 'success');
       // 保存频道列表、昵称与查询密码，再自动建连（后端异步执行，多频道耗时更长，避免代理超时）
-      await API.musicTsSaveConfig({ ts3abChannels: deployChannels.slice(), ts3abBotNickname: $('ts-bot-nickname').value.trim() || '点歌机器人', tsQueryAdminPassword: key });
+      const linkPayload = { ts3abChannels: deployChannels.slice(), ts3abBotNickname: $('ts-bot-nickname').value.trim() || '点歌机器人' };
+      if (key) linkPayload.tsQueryAdminPassword = key; // 留空 = 保持现有密码，不回传遮罩
+      await API.musicTsSaveConfig(linkPayload);
       await API.musicTsLink();
       TSUtils.toast('已发起部署，请稍后用「刷新状态」查看各频道结果', 'success');
       setTimeout(refreshTsStatus, 8000);
@@ -738,7 +741,10 @@ TSPages.music = async function () {
     const sel = $('ts-channel');
     try {
       const cfg = await API.musicTsConfig();
-      $('ts-key').value = cfg.hasQueryPassword ? '••••••••' : '';
+      tsHasPassword = !!cfg.hasQueryPassword;
+      // ⚠️ 不能把遮罩符填进输入框：保存时会被当成密码提交，覆盖真实密码
+      $('ts-key').value = '';
+      $('ts-key').placeholder = tsHasPassword ? '已配置（留空保持不变；修改请输入新密码）' : '填入 serveradmin 查询密码';
       $('ts-bot-nickname').value = cfg.ts3abBotNickname || '点歌机器人';
       deployChannels = Array.isArray(cfg.ts3abChannels) ? cfg.ts3abChannels.slice() : [];
       $('ts-chat-on').checked = cfg.tsChatEnabled !== false;
