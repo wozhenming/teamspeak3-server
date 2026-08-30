@@ -16,7 +16,7 @@ services:
   # ---------- TeamSpeak 3 服务器 ----------
   teamspeak:
     image: teamspeak:3.13
-    container_name: teamspeak-server
+    container_name: ${TS_CONTAINER_NAME:-teamspeak-server}
     restart: unless-stopped
     environment:
       - TS3SERVER_LICENSE=accept   # 接受许可证（免费，最多 32 槽位）
@@ -39,7 +39,7 @@ services:
     build: ./panel
     image: ts3-panel:local
     pull_policy: never              # 只使用本地构建产物，不从 registry 拉取（避免镜像源 403）
-    container_name: ts3-panel
+    container_name: ${PANEL_CONTAINER_NAME:-ts3-panel}
     restart: unless-stopped
     ports:
       - "${PANEL_PORT:-3000}:3000"             # 管理面板
@@ -52,7 +52,7 @@ services:
       - TSSERVER_QUERY_HOST=teamspeak              # 容器网络内访问 TS3 ServerQuery
       - TSSERVER_QUERY_PORT=10011
       - TSSERVER_QUERY_PASSWORD=${TS_QUERY_ADMIN_PASSWORD:-}   # serveradmin 密码（也可在「部署管理」页填写）
-      - TSSERVER_CONTAINER_NAME=teamspeak-server
+      - TSSERVER_CONTAINER_NAME=${TS_CONTAINER_NAME:-teamspeak-server}
       - PANEL_RUN_MODE=container               # 容器化模式：部署页操作/日志对接主机 Docker
       - PANEL_ENV_FILE=/app/config/panel.env   # 查询密码等配置持久化位置
       - MUSIC_BASE_URL=http://music:3200        # 点歌机器人（后端代理）
@@ -69,7 +69,7 @@ services:
     build:
       context: .
       dockerfile: music/api-enhanced.Dockerfile
-    container_name: neteasemusic
+    container_name: ${NETEASE_CONTAINER_NAME:-neteasemusic}
     restart: unless-stopped
     environment:
       - PORT=3000                      # 仅内网，不暴露宿主端口
@@ -94,7 +94,7 @@ services:
   # ---------- 点歌机器人（music-bot：队列/播放器/电台流/聊天指令监听） ----------
   music:
     build: ./music
-    container_name: ts3-music-bot
+    container_name: ${MUSIC_CONTAINER_NAME:-ts3-music-bot}
     restart: unless-stopped
     environment:
       - MUSIC_HOST=0.0.0.0
@@ -142,7 +142,7 @@ services:
   # rights.toml 限定 API 仅内网可用（顶层 "＋"="*"，端口不发布到宿主机）。
   ts3audiobot:
     image: ancieque/ts3audiobot:0.12.0
-    container_name: ts3audiobot
+    container_name: ${TS3AB_CONTAINER_NAME:-ts3audiobot}
     restart: unless-stopped
     volumes:
       - ts3ab-data:/app/data
